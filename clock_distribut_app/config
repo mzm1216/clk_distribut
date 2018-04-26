@@ -1,0 +1,10 @@
+[core]
+	bare = true
+	repositoryformatversion = 0
+	filemode = false
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/mzm1216/clk_distribut.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+	pushurl = https://github.com/mzm1216/clk_distribut.git

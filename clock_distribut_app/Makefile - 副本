@@ -1,0 +1,20 @@
+CC = arm-arago-linux-gnueabi-gcc
+CFALGS = -c -Wall -O2
+
+obj = main.o fpga_ctl.o
+clock_distribut: $(obj)
+	$(CC) $(obj) -lpthread -lrt -o clock_distribut -Wall -O2
+
+#clock_distribut: main.o fpga_ctl.o
+#	$(CC) main.o fpga_ctl.o -lpthread -lrt -o clock_distribut -Wall -O2
+
+main.o: main.c main.h
+	$(CC) main.c $(CFALGS)
+fpga_ctl.o: fpga_ctl.c fpga_ctl.h
+	$(CC) fpga_ctl.c $(CFALGS)
+
+.PHONY:
+	clean
+
+clean:
+	rm clock_distribut *.o
