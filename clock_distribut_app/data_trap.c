@@ -39,7 +39,7 @@ int get_hardware_version(char *buffer)
 		return -1;
 	}
 
-	ret = sprintf(buffer, "%d.%d.%d.%d%d%d_%d", 1, 0, 0, 2018, 04, 12, 0);
+	ret = sprintf(buffer, "%d.%d.%d.%d%d%d_%d\0", 1, 0, 0, 2018, 04, 12, 0);
 	return ret;
 }
 

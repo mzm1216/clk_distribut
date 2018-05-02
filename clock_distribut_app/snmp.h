@@ -60,7 +60,9 @@ extern "C" {
 #define CLCOK_SOURCE_BIT		(0x3<<14)
 #define GPS_LOCK_STATE_BIT		(0x0080)
 #define PTP_LOCK_STATE_BIT		(0x2000)
-#define FPGA_WORK_STATE_MASTER			(0xaa)
+#define FPGA_WORK_STATE_MASTER			(0x5a)
+#define FPGA_WORK_STATE_SLAVE			(0xaa)
+
 #define NET_CONNECT_STATE_BIT	(49)
 #define OMAP_RUN_STATE_BIT		(0x1000)
 
@@ -291,81 +293,8 @@ typedef struct {
 	char cddvigorSource[SIZE];
 } Trap_cddOmapRunState_T;
 
-#if 0
-
-typedef struct {
-	char btsLinkState[SIZE];
-	char vigorSource[SIZE];
-} Trap_btsLinkState_T;
-
-typedef struct {
-	char btsExtClock[SIZE];
-	char vigorSource[SIZE];
-} Trap_btsExtClock_T;
 
 
-typedef struct {
-	char btsTxState[255];
-	char vigorSource[255];
-}Trap_btsTxState_T;
-
-
-typedef struct {
-	char btsTxState[SIZE];
-	char btsRealTxPower[SIZE];
-	char btsVswr[SIZE];
-	char btsRssi[SIZE];
-	char btsEnvirTemperature[SIZE];
-	char btsPaTemperature[SIZE];
-	char btsDcVoltage[SIZE];
-	char btsBatVoltage[SIZE];
-	char btsFanSpeed[SIZE];
-	char vigorSource[SIZE];
-} Trap_btsState_T;
-
-typedef struct {
-	char sccSlotNum[SIZE];
-	char sccBusy[SIZE];
-	char sccCaller[SIZE];
-	char sccCalled[SIZE];
-	unsigned char sccRtpIpAddress[SIZE];
-	char sccCallInfo[SIZE];
-	char vigorSource[SIZE];
-} Trap_mscSlotState_T;
-
-typedef struct {
-	unsigned char sccBtsIpAddress[SIZE];
-	char sccBtsState[SIZE];
-	char vigorSource[SIZE];
-} Trap_mscBtsState_T;
-
-typedef struct {
-	char sccLinkState[SIZE];
-	char vigorSource[SIZE];
-} Trap_mscLinkState_T;
-
-typedef struct {
-	char sccCaller[SIZE];
-	char sccCalled[SIZE];
-	char sccTalker[SIZE];
-	char vigorSource[SIZE];
-} Trap_sccPttState_T;
-
-typedef struct {
-	char vigorSource[SIZE];
-	char equipType[SIZE];
-	unsigned char vigorDeviceState[SIZE];
-} Trap_vigorHeartbeat_T;
-
-typedef struct {
-	char vigorSource[SIZE];
-	char equipType[SIZE];
-	unsigned char vigorDeviceState[SIZE];
-} Trap_vigorProcAbort_T;
-#endif
-
-#define VT_3308_MIB TRUE
-#define VT_3830_MIB TRUE
 
 /*trap 缓冲区定义 */
 #define SNMP_TRAP_QUEUE_ENTRY_LOG_ONLY      1
@@ -494,6 +423,7 @@ extern int snmp_init(void);
 extern unsigned int s2ui(const char *s);
 extern unsigned long long s2ull(const char *s);
 #define OPERATE_SUCCESS 0
+#define	SNMPD_SOURCES_PROT  "10062"
 
 #ifdef __cplusplus
 }

@@ -55,7 +55,8 @@ static uint8 *trap_Lock_state[]=
 static uint8 *trap_FPGA_Work_state[]=
 {
 	"FPGAslaveState",
-	"FPGAmasterState"
+	"FPGAmasterState",
+	"Error"
 };
 	
 static uint8 *trap_Net_state[]=
@@ -73,7 +74,8 @@ static uint8 *trap_arm_run_state[]=
 static uint8 *param_work_mode[]=
 {
 	"Master",
-	"Slave"
+	"Slave",
+	"Error"
 };
 
 extern CLOCK_PARA* cdd_get_clk_param(void);
@@ -94,11 +96,121 @@ static ui2s(unsigned int value, unsigned char *p_str);
 static int clean_MsgQueue(QUEUE_MSG_T *p_msg, int c);
 static void trap(int cmd, int info, void *data);
 static int get_net_parameter( char *para_get, int flag);
+static int is_valid_ip(const unsigned char* ipaddr);
+static int is_valid_netmask(const unsigned char* netmask);
+static int set_netmask(const uint8* netmask);
+static int set_ipaddress(const uint8* ip);
 
 #if 1
 static int snmp_data_ack(QUEUE_MSG_T *queue, SN_DataObject *obj,
 		unsigned long oper_code);
+static int snmp_data_set_ack(QUEUE_MSG_T *queue, SN_DataObject *obj,
+		unsigned long oper_code, int error);
+
 #endif
+//static int snmp_data_0x00(QUEUE_MSG_T *msg);
+static int snmp_data_0x01(QUEUE_MSG_T *msg);
+static int snmp_data_0x02(QUEUE_MSG_T *msg);
+static int snmp_data_0x03(QUEUE_MSG_T *msg);
+static int snmp_data_0x04(QUEUE_MSG_T *msg);
+static int snmp_data_0x05(QUEUE_MSG_T *msg);
+
+static int snmp_data_0x32(QUEUE_MSG_T *msg);
+static int snmp_data_0x36(QUEUE_MSG_T *msg);
+
+
+static int snmp_data_0x60(QUEUE_MSG_T *msg);
+static int snmp_data_0x61(QUEUE_MSG_T *msg);
+static int snmp_data_0x62(QUEUE_MSG_T *msg);
+static int snmp_data_0x63(QUEUE_MSG_T *msg);
+static int snmp_data_0x64(QUEUE_MSG_T *msg);
+static int snmp_data_0x65(QUEUE_MSG_T *msg);
+
+//static int snmp_data_0x06(QUEUE_MSG_T *msg);
+//static int snmp_data_0x07(QUEUE_MSG_T *msg);
+//static int snmp_data_0x08(QUEUE_MSG_T *msg);
+//static int snmp_data_0x09(QUEUE_MSG_T *msg);
+//static int snmp_data_0x0a(QUEUE_MSG_T *msg);
+//static int snmp_data_0x0b(QUEUE_MSG_T *msg);
+//static int snmp_data_0x0c(QUEUE_MSG_T *msg);
+//static int snmp_data_0x0d(QUEUE_MSG_T *msg);
+//static int snmp_data_0x0e(QUEUE_MSG_T *msg);
+//static int snmp_data_0x0f(QUEUE_MSG_T *msg);
+//static int snmp_data_0x10(QUEUE_MSG_T *msg);
+
+//static int snmp_data_0x11(QUEUE_MSG_T *msg);
+//static int snmp_data_0x12(QUEUE_MSG_T *msg);
+//static int snmp_data_0x13(QUEUE_MSG_T *msg);
+//static int snmp_data_0x14(QUEUE_MSG_T *msg);
+//static int snmp_data_0x15(QUEUE_MSG_T *msg);
+//static int snmp_data_0x16(QUEUE_MSG_T *msg);
+//static int snmp_data_0x17(QUEUE_MSG_T *msg);
+//static int snmp_data_0x18(QUEUE_MSG_T *msg);
+//static int snmp_data_0x19(QUEUE_MSG_T *msg);
+//static int snmp_data_0x1a(QUEUE_MSG_T *msg);
+//static int snmp_data_0x1b(QUEUE_MSG_T *msg);
+//static int snmp_data_0x1c(QUEUE_MSG_T *msg);
+//static int snmp_data_0x1d(QUEUE_MSG_T *msg);
+//static int snmp_data_0x1e(QUEUE_MSG_T *msg);
+//static int snmp_data_0x1f(QUEUE_MSG_T *msg);
+//static int snmp_data_0x20(QUEUE_MSG_T *msg);
+
+//static int snmp_data_0x21(QUEUE_MSG_T *msg);
+//static int snmp_data_0x22(QUEUE_MSG_T *msg);
+//static int snmp_data_0x23(QUEUE_MSG_T *msg);
+//static int snmp_data_0x24(QUEUE_MSG_T *msg);
+//static int snmp_data_0x25(QUEUE_MSG_T *msg);
+//static int snmp_data_0x26(QUEUE_MSG_T *msg);
+//static int snmp_data_0x27(QUEUE_MSG_T *msg);
+//static int snmp_data_0x28(QUEUE_MSG_T *msg);
+//static int snmp_data_0x29(QUEUE_MSG_T *msg);
+//static int snmp_data_0x2a(QUEUE_MSG_T *msg);
+//static int snmp_data_0x2b(QUEUE_MSG_T *msg);
+//static int snmp_data_0x2c(QUEUE_MSG_T *msg);
+//static int snmp_data_0x2d(QUEUE_MSG_T *msg);
+//static int snmp_data_0x2e(QUEUE_MSG_T *msg);
+//static int snmp_data_0x2f(QUEUE_MSG_T *msg);
+//static int snmp_data_0x30(QUEUE_MSG_T *msg);
+
+//static int snmp_data_0x31(QUEUE_MSG_T *msg);
+static int snmp_data_0x32(QUEUE_MSG_T *msg);
+//static int snmp_data_0x33(QUEUE_MSG_T *msg);
+//static int snmp_data_0x34(QUEUE_MSG_T *msg);
+//static int snmp_data_0x35(QUEUE_MSG_T *msg);
+static int snmp_data_0x36(QUEUE_MSG_T *msg);
+//static int snmp_data_0x37(QUEUE_MSG_T *msg);
+//static int snmp_data_0x38(QUEUE_MSG_T *msg);
+//static int snmp_data_0x39(QUEUE_MSG_T *msg);
+//static int snmp_data_0x3a(QUEUE_MSG_T *msg);
+//static int snmp_data_0x3b(QUEUE_MSG_T *msg);
+//static int snmp_data_0x3c(QUEUE_MSG_T *msg);
+//static int snmp_data_0x3d(QUEUE_MSG_T *msg);
+//static int snmp_data_0x3e(QUEUE_MSG_T *msg);
+//static int snmp_data_0x3f(QUEUE_MSG_T *msg);
+//static int snmp_data_0x40(QUEUE_MSG_T *msg);
+
+//static int snmp_data_0x41(QUEUE_MSG_T *msg);
+//static int snmp_data_0x42(QUEUE_MSG_T *msg);
+
+//static int snmp_data_0x43(QUEUE_MSG_T *msg);
+//static int snmp_data_0x44(QUEUE_MSG_T *msg);
+//static int snmp_data_0x45(QUEUE_MSG_T *msg);
+//static int snmp_data_0x46(QUEUE_MSG_T *msg);
+//static int snmp_data_0x47(QUEUE_MSG_T *msg);
+//static int snmp_data_0x48(QUEUE_MSG_T *msg);
+//static int snmp_data_0x49(QUEUE_MSG_T *msg);
+//static int snmp_data_0x4a(QUEUE_MSG_T *msg);
+//static int snmp_data_0x4b(QUEUE_MSG_T *msg);
+//static int snmp_data_0x4c(QUEUE_MSG_T *msg);
+//static int snmp_data_0x4d(QUEUE_MSG_T *msg);
+//static int snmp_data_0x4e(QUEUE_MSG_T *msg);
+//static int snmp_data_0x4f(QUEUE_MSG_T *msg);
+//static int snmp_data_0x50(QUEUE_MSG_T *msg);
+//static int snmp_data_0x51(QUEUE_MSG_T *msg);
+//static int snmp_data_0x52(QUEUE_MSG_T *msg);
+
+//static int snmp_data_0x53(QUEUE_MSG_T *msg);
+//static int snmp_data_0x54(QUEUE_MSG_T *msg);
 
 /*******************************************************/
 static SN_DataObject objSnmp;
@@ -110,10 +222,32 @@ static int flag_trap = 0;
 static Sem_Var sem_var;
 static sem_t trapsignal;
 /********************************************************/
-#if 0
-static SNMP_DATA SnmpData[] = { snmp_data_0x60, snmp_data_0x61, snmp_data_0x62,
-		snmp_data_0x63, snmp_data_0x64, snmp_data_0x65
- };
+#if 1
+
+//static snmp_data_deal_fun[]={0x1,0x2,0x3,0x4,0x4,0x32,0x36,0x60,0x61,0x62,0x63,0x64,0x65,0x66};
+static SNMP_DATA SnmpData[0x70] = { NULL};// snmp_data_0x01, snmp_data_0x02,
+//		snmp_data_0x03, snmp_data_0x04, snmp_data_0x05,// snmp_data_0x06,
+//		snmp_data_0x07, snmp_data_0x08, snmp_data_0x09, snmp_data_0x0a,
+//		snmp_data_0x0b, snmp_data_0x0c, snmp_data_0x0d, snmp_data_0x0e,
+//		snmp_data_0x0f, snmp_data_0x10, snmp_data_0x11, snmp_data_0x12,
+//		snmp_data_0x13, snmp_data_0x14, snmp_data_0x15, snmp_data_0x16,
+//		snmp_data_0x17, snmp_data_0x18, snmp_data_0x19, snmp_data_0x1a,
+//		snmp_data_0x1b, snmp_data_0x1c, snmp_data_0x1d, snmp_data_0x1e,
+//		snmp_data_0x1f, snmp_data_0x20, snmp_data_0x21, snmp_data_0x22,
+//		snmp_data_0x23, snmp_data_0x24, snmp_data_0x25, snmp_data_0x26,
+//		snmp_data_0x27, snmp_data_0x28, snmp_data_0x29, snmp_data_0x2a,
+//		snmp_data_0x2b, snmp_data_0x2c, snmp_data_0x2d, snmp_data_0x2e,
+//		snmp_data_0x2f, snmp_data_0x30, snmp_data_0x31, snmp_data_0x32,
+//		snmp_data_0x33, snmp_data_0x34, snmp_data_0x35, snmp_data_0x36,
+//		snmp_data_0x37, snmp_data_0x38, snmp_data_0x39, snmp_data_0x3a,
+//		snmp_data_0x3b, snmp_data_0x3c, snmp_data_0x3d, snmp_data_0x3e,
+//		snmp_data_0x3f, snmp_data_0x40, snmp_data_0x41, snmp_data_0x42,
+//		snmp_data_0x43, snmp_data_0x44, snmp_data_0x45, snmp_data_0x46,
+//		snmp_data_0x47, snmp_data_0x48, snmp_data_0x49, snmp_data_0x4a,
+//		snmp_data_0x4b, snmp_data_0x4c, snmp_data_0x4d, snmp_data_0x4e,
+//		snmp_data_0x4f, snmp_data_0x50, snmp_data_0x51, snmp_data_0x52,
+//		snmp_data_0x53, snmp_data_0x54 
+//};
 #endif
 
 /**************************检查************************************/
@@ -141,6 +275,411 @@ void refresh_cdd_param()
 
 	
 }
+
+ 
+ /*************************************************************
+  * 						 IP地址修改/查询
+  *************************************************************/
+ static int snmp_data_0x01(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 char buffer[256] = { 0 };
+	 QUEUE_MSG_T msg_ack;
+ //  DataObject *obj = &objSnmp;
+ 
+	 SN_DataObject *obj = &objSnmp;
+	 struct in_addr addr;
+	 int ret;
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 SysInfoTrace(
+			 "this is %s,QUEUE_MSG_T msg_type : %x,snmp_msg.oper_code : %x\n",
+			 __FUNCTION__, msg->msg_type, msg->snmp_msg.oper_code);
+ 
+	 if (type == CMD_GET) {  //查询
+ 
+		 ret = get_net_parameter(buffer, SIOCGIFADDR);
+		 if (ret != 0) {
+			 SysErrorTrace("get local ip error!\n");
+		 }
+ 
+		 SysInfoTrace("QUEUE_MSG_T get local ip is: %s\n", buffer);
+		 /* 需要一个回复失败
+		  */
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, buffer);
+ 
+		 ret = snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+ 
+	 } else if (type == CMD_SET) {	 //修改
+		 //addr.s_addr = msg->snmp_msg.u_data.msg_data_int;
+ 
+		 SysInfoTrace("QUEUE_MSG_T set local ip is: %s\n",
+				 msg->snmp_msg.u_data.msg_data_str);
+ 
+		 //ret = set_ipaddress((uint8 *)inet_ntoa(addr));
+		 ret = set_ipaddress(msg->snmp_msg.u_data.msg_data_str);
+ 
+		 if (ret)
+			 snmp_data_set_ack(&msg_ack, obj, msg->snmp_msg.oper_code, -1);
+		 else if (!ret)
+			 snmp_data_set_ack(&msg_ack, obj, msg->snmp_msg.oper_code, 0);
+ 
+		 if (ret != 0) {
+			 SysErrorTrace("ip address format is wrong!\n");
+			 return -1;
+		 }
+		 /*
+		  * 需要回复设置成功/失败
+		  */
+	 } else {
+		 SysErrorTrace("msg type's format is wrong [%#x]\n", type);
+		 return -1;
+	 }
+ 
+	 return 0;
+ }
+ 
+ /*************************************************************
+  * 					 子网掩码地址修改/查询
+  *************************************************************/
+ static int snmp_data_0x02(QUEUE_MSG_T *msg) {
+	 struct in_addr addr;
+	 long type = msg->msg_type;
+	 char buffer[256] = { 0 };
+	 QUEUE_MSG_T msg_ack;
+ //  DataObject *obj = &objSnmp;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret;
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 SysInfoTrace(
+			 "this is %s,QUEUE_MSG_T msg_type : %x,snmp_msg.oper_code : %x\n",
+			 __FUNCTION__, msg->msg_type, msg->snmp_msg.oper_code);
+ 
+	 if (type == CMD_GET) {  //查询
+		 ret = get_net_parameter(buffer, SIOCGIFNETMASK);
+		 if (ret != 0) {
+			 SysErrorTrace("get local ip error!\n");
+		 }
+		 /*
+		  * 需要一个回复失败
+		  */
+		 SysInfoTrace("QUEUE_MSG_T get mask is: %s\n", buffer);
+ 
+		 //msg_ack.snmp_msg.u_data.msg_data_int = inet_addr(buffer);
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, buffer);
+		 ret = snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+ 
+	 } else if (type == CMD_SET) {	 //修改
+		 SysInfoTrace("QUEUE_MSG_T set mask is: %s\n",
+				 msg->snmp_msg.u_data.msg_data_str);
+		 //ret = set_netmask((uint8 *)inet_ntoa(addr));
+		 ret = set_netmask(msg->snmp_msg.u_data.msg_data_str);
+		 if (ret)
+			 snmp_data_set_ack(&msg_ack, obj, msg->snmp_msg.oper_code, -1);
+		 else if (!ret)
+			 snmp_data_set_ack(&msg_ack, obj, msg->snmp_msg.oper_code, 0);
+		 if (ret != 0) {
+			 SysErrorTrace("ip address format is wrong!\n");
+			 return -1;
+		 }
+	 } else {
+		 SysErrorTrace("msg type's format is wrong [%#x]\n", type);
+		 return -1;
+	 }
+ 
+	 return 0;
+ }
+ 
+ /*************************************************************
+  * 						 网关地址修改/查询
+  *************************************************************/
+ static int snmp_data_0x03(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 char buffer[256] = { 0 };
+	 QUEUE_MSG_T msg_ack;
+ //  DataObject *obj = &objSnmp;
+	 SN_DataObject *obj = &objSnmp;
+	 struct in_addr addr;
+	 int ret;
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 SysInfoTrace(
+			 "this is %s,QUEUE_MSG_T msg_type : %x,snmp_msg.oper_code : %x\n",
+			 __FUNCTION__, msg->msg_type, msg->snmp_msg.oper_code);
+ 
+	 if (type == CMD_GET) {
+		 ret = get_gateway(buffer);
+		 if (ret != 0) {
+			 SysErrorTrace("get gateway error!\n");
+		 }
+		 /*
+		  * 需要一个回复失败
+		  */
+		 SysInfoTrace("QUEUE_MSG_T get gw is: %s\n", buffer);
+		 //msg_ack.snmp_msg.u_data.msg_data_int = inet_addr(buffer);
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, buffer);
+		 ret = snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+ 
+	 } else if (type == CMD_SET) {
+		 //addr.s_addr = msg->snmp_msg.u_data.msg_data_int;
+ 
+		 SysInfoTrace("QUEUE_MSG_T set gw is: %s\n",
+				 msg->snmp_msg.u_data.msg_data_str);
+		 ret = set_gateway(msg->snmp_msg.u_data.msg_data_str);
+		 if (ret)
+			 snmp_data_set_ack(&msg_ack, obj, msg->snmp_msg.oper_code, -1);
+		 else if (!ret)
+			 snmp_data_set_ack(&msg_ack, obj, msg->snmp_msg.oper_code, 0);
+		 //ret = set_gateway((uint8 *)inet_ntoa(addr));
+		 if (ret != 0) {
+			 SysErrorTrace("ip address format is wrong!\n");
+			 return -1;
+		 }
+		 /*
+		  * 需要回复设置成功/失败
+		  */
+	 } else {
+		 SysErrorTrace("msg type's format is wrong [%#x]\n", type);
+		 return -1;
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 							 MAC地址查询
+  *************************************************************/
+ static int snmp_data_0x04(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 char buffer[256] = { 0 };
+	 QUEUE_MSG_T msg_ack;
+ //  DataObject *obj = &objSnmp;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret;
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 SysInfoTrace(
+			 "this is %s,QUEUE_MSG_T msg_type : %x,snmp_msg.oper_code : %x\n",
+			 __FUNCTION__, msg->msg_type, msg->snmp_msg.oper_code);
+ 
+	 if (type != CMD_GET) {
+		 SysErrorTrace("get mac msg type error[%#x]\n", type);
+		 return -1;
+	 }
+ 
+	 ret = get_net_parameter(buffer, SIOCGIFHWADDR);
+	 if (ret != 0) {
+		 SysErrorTrace("get mac error!\n");
+ 
+	 }
+	 SysInfoTrace("QUEUE_MSG_T get mac is: %s\n", buffer);
+	 /*
+	  * 需要一个回复失败
+	  */
+ //msg_ack.snmp_msg.u_data.msg_data_int = inet_addr(buffer);
+	 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, buffer);
+ 
+	 return 0;
+ }
+ 
+ /*************************************************************
+  * 					 数据库ip地址
+  *************************************************************/
+ static int snmp_data_0x05(QUEUE_MSG_T *msg) {
+ 
+	 return 0;
+ }
+ 
+ /*************************************************************
+  * 				 设备类型
+  *************************************************************/
+ static int snmp_data_0x32(QUEUE_MSG_T *msg) {
+ 
+	 long type = msg->msg_type;
+	 unsigned char buffer[256] = { 0 };
+	 char xpath[256] = { 0 };
+	 QUEUE_MSG_T msg_ack;
+ //  DataObject *obj = &objSnmp;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret;
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+#ifdef	__SNMP_PRINT
+	 SysInfoTrace(
+			 "this is %s,QUEUE_MSG_T msg_type : %x,snmp_msg.oper_code : %x\n",
+			 __FUNCTION__, msg->msg_type, msg->snmp_msg.oper_code);
+#endif
+	 if (type == CMD_GET) {  //查询
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str,  "CLKD");
+		 ret = snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 } else {
+		 SysErrorTrace("msg type's format is wrong [%#x]\n", type);
+		 return -1;
+	 }
+	 return 0;
+ 
+ }
+ 
+ /*************************************************************
+  * 				 消息源
+  *************************************************************/
+ static int snmp_data_0x36(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+		 get_net_parameter(buffer, SIOCGIFADDR);
+		 strcat(buffer, ":");
+		 strcat(buffer,SNMPD_SOURCES_PROT);
+		 
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, buffer);
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 				工作模式
+  *************************************************************/
+ static int snmp_data_0x60(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0,tmpnum=0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+
+	 
+	 CLOCK_PARA * paramptr = cdd_get_clk_param();
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+	 	if((paramptr->device_mode == 1) ||
+			(paramptr->device_mode == 2))
+	 	{
+	 		tmpnum = paramptr->device_mode -1;
+	 	}
+		else{
+			tmpnum = 2;
+			}
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, param_work_mode[tmpnum]);
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 				应用版本
+  *************************************************************/
+ static int snmp_data_0x61(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+	 CLOCK_PARA * paramptr = cdd_get_clk_param();
+	 
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+		 get_arm_version(msg_ack.snmp_msg.u_data.msg_data_str);
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 				FPGA版本
+  *************************************************************/
+ static int snmp_data_0x62(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+	 CLOCK_PARA * paramptr = cdd_get_clk_param();
+	 
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, paramptr->fpga_version);
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 				硬件版本
+  *************************************************************/
+ static int snmp_data_0x63(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+	 CLOCK_PARA * paramptr = cdd_get_clk_param();
+	 
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+		 get_hardware_version(msg_ack.snmp_msg.u_data.msg_data_str);			 
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 				时钟分频器型号
+  *************************************************************/
+ static int snmp_data_0x64(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+	 CLOCK_PARA * paramptr = cdd_get_clk_param();
+	 
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, DEVICE_NAME);
+		 
+//	 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, paramptr->device_name);
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 				GPS时间
+  *************************************************************/
+ static int snmp_data_0x65(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+	 CLOCK_PARA * paramptr = cdd_get_clk_param();
+	 
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, paramptr->gps_time);
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+ /*************************************************************
+  * 				PTP时间
+  *************************************************************/
+ static int snmp_data_0x66(QUEUE_MSG_T *msg) {
+	 long type = msg->msg_type;
+	 QUEUE_MSG_T msg_ack;
+	 SN_DataObject *obj = &objSnmp;
+	 int ret = 0;
+	 char buffer[255] = { 0 }, temp[16] = { 0 };
+	 CLOCK_PARA * paramptr = cdd_get_clk_param();
+	 
+	 memset(&msg_ack, 0, sizeof(QUEUE_MSG_T));
+	 if (type == CMD_GET) {
+		 strcpy(msg_ack.snmp_msg.u_data.msg_data_str, paramptr->ptp_time);
+		 snmp_data_ack(&msg_ack, obj, msg->snmp_msg.oper_code);
+	 }
+ 
+	 return 0;
+ }
+
  /*************************************************************
   * 				时钟分配器版本
   *************************************************************/
@@ -165,6 +704,9 @@ void refresh_cdd_param()
 	 if (type == CMD_GET) {  //查询
 		 	//refresh_cdd_param();
 			switch(cmd){
+
+				
+			
 				case MSG_CODE_CDD_WORK_MODE:
 					strcpy(msg_ack.snmp_msg.u_data.msg_data_str, param_work_mode[paramptr->device_mode-1]);
 				break;
@@ -201,6 +743,8 @@ void refresh_cdd_param()
 				case MSG_CODE_CDD_EQU_TYPE :
 						strcpy(msg_ack.snmp_msg.u_data.msg_data_str, "CLKD");
 					break;
+
+					
 				
 				default:
 					
@@ -221,9 +765,9 @@ void refresh_cdd_param()
 
 void set_timer() {
 	struct itimerval itv,oldtv;
-	itv.it_interval.tv_sec = 5;
+	itv.it_interval.tv_sec = 3;
 	itv.it_interval.tv_usec = 0;
-	itv.it_value.tv_sec = 5;
+	itv.it_value.tv_sec = 3;
 	itv.it_value.tv_usec = 0;
 	setitimer(ITIMER_REAL, &itv, &oldtv);
 }
@@ -271,13 +815,14 @@ void * pthread_snmp_recv(void *arg) {
 //			continue;
 //		}
 
-		SysErrorTrace("while___ ret = %d,errno = %d,len[%d]Msg_recv[%d]\n",
-				len, errno,len,Msg_recv);
+		//SysErrorTrace("while___ ret = %d,errno = %d,len[%d]Msg_recv[%d]\n",
+		//		len, errno,len,Msg_recv);
 		memset(&msg, 0, sizeof(msg));
-		len = msgrcv(Msg_recv, &msg, sizeof(QUEUE_MSG_T), 0, 0);
+		len = msgrcv(Msg_recv, &msg, sizeof(QUEUE_MSG_T), (long int)0, 0);
 		if (len < 0) {
-			SysErrorTrace("receive msg from snmp error! ret = %d,errno = %d,len[%d]Msg_recv[%d]\n",
+			SysErrorTrace("receive msg from snmp error! ret = %d,errno = %d,len[%d]Msg_recv[%d]\r\n",
 					len, errno,len,Msg_recv);
+			SysErrorTrace("error[%s]\r\n",strerror(errno));
 			//delay(8000000);
 			usleep(600000);
 			continue;
@@ -293,10 +838,13 @@ void * pthread_snmp_recv(void *arg) {
 						&& flag_trap == 0)
 					flag_trap = TRUE;
 			/*在保证收到过代理的查询命令后，发送trap才有意义，并且flag标志用来保证只发一次*/
+					//snmp_data_deal(&msg);
+		oper_code = msg.snmp_msg.oper_code;
+		SnmpData[oper_code](&msg);
 		}
 
 
-		snmp_data_deal(&msg);
+		
 
 	}
 	return NULL;
@@ -486,6 +1034,116 @@ void Get_CDD_Ipaddr(char *buf)
 
 //	strcpy(buf,paramptr->recvport);
 }
+/*
+ * 验证IP地址是否合法
+ */
+static int is_valid_ip(const unsigned char* ipaddr) {
+	int ret = 0;
+	struct in_addr inp;
+	ret = inet_aton((const char *) ipaddr, &inp);
+	if (0 == ret) {
+		return -1;
+	} else {
+printf("inet_aton:ip=%u\n", ntohl(inp.s_addr));
+
+	}
+
+	return 0;
+}
+static int set_net_parameter( const uint8* addr, int flag) {
+	struct ifreq ifr;
+	struct sockaddr_in sin;
+	int sockfd;
+
+	if (addr == NULL) {
+		perror("ip point is null!\n");
+		return -1;
+	}
+
+	if (flag)
+
+		sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sockfd == -1) {
+		fprintf(stderr, "Could not get socket.\n");
+		perror("eth0\n");
+		return -1;
+	}
+
+	snprintf(ifr.ifr_name, (sizeof(ifr.ifr_name) - 1), "%s", NET_NAME);
+
+	/* Read interface flags */
+	if (ioctl(sockfd, SIOCGIFFLAGS, &ifr) < 0) {
+		fprintf(stderr, "ifdown: shutdown ");
+		perror(ifr.ifr_name);
+		close(sockfd);
+		return -1;
+	}
+
+	memset(&sin, 0, sizeof(struct sockaddr));
+	sin.sin_family = AF_INET;
+	inet_aton((const char *) addr, (struct in_addr *) &sin.sin_addr.s_addr);
+	memcpy(&ifr.ifr_addr, &sin, sizeof(struct sockaddr));
+	if (ioctl(sockfd, flag, &ifr) < 0) {
+		fprintf(stderr, "Cannot set IP address. ");
+		perror(ifr.ifr_name);
+		close(sockfd);
+		return -1;
+	}
+
+	if (flag == SIOCSIFADDR) {    //如果是IP地址设置激活标志
+		ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
+	}
+
+	close(sockfd);
+	return 0;
+}
+
+/*
+ * 先验证是否为合法IP，
+ * 然后将掩码转化成32无符号整型，取反为000...00111...1，
+ * 然后再加1为00...01000...0，此时为2^n，如果满足就为合法掩码
+ */
+static int is_valid_netmask(const unsigned char* netmask) {
+	if (is_valid_ip(netmask) == 0) {
+		unsigned int b = 0, i, n[4];
+		sscanf((const char *) netmask, "%u.%u.%u.%u", &n[3], &n[2], &n[1],
+				&n[0]);
+		for (i = 0; i < 4; ++i) //将子网掩码存入32位无符号整型
+			b += n[i] << (i * 8);
+		b = ~b + 1;
+		if ((b & (b - 1)) == 0) //判断是否为2^n
+			return 0;
+	}
+
+	return -1;
+}
+
+/*
+ * 设置子网掩码
+ */
+static int set_netmask(const uint8* netmask) {
+	int ret;
+	ret = is_valid_netmask(netmask);	//验证掩码合法性
+	if (ret != 0) {
+
+		return -1;
+	}
+	ret = set_net_parameter(netmask, SIOCSIFNETMASK);
+	return ret;
+}
+
+/*
+ * 设置IP地址
+ */
+static int set_ipaddress(const uint8* ip) {
+	int ret;
+	ret = is_valid_ip(ip);	//验证IP地址合法性
+	if (ret != 0) {
+		return -1;
+	}
+	ret = set_net_parameter(ip, SIOCSIFADDR);
+	return ret;
+}
 
 static int get_net_parameter( char *para_get, int flag) {
 	int socket_get, ret;
@@ -551,9 +1209,10 @@ void Trap_msg_to_snmpd(uint32 opt_code){
 	get_net_parameter(buffer, SIOCGIFADDR);
 	strcat(buffer, ":");
 	
-	strcat(buffer, "1234");
+	strcat(buffer, SNMPD_SOURCES_PROT);
 	
 	SysInfoTrace("Trap_msg_to_snmpdIPaddr[%s]\r\n",buffer);
+	
 	memset(&msg_trap, 0, sizeof(QUEUE_MSG_T));
 
 	switch(opt_code){
@@ -584,7 +1243,16 @@ void Trap_msg_to_snmpd(uint32 opt_code){
 		
 		case SNMP_TRAP_QUEUE_CDD_FPGA_WORK_TRAP:
 						
-			tmpnum = (trapptr->device_fpgastate==FPGA_WORK_STATE_MASTER)?1:0;
+			if((trapptr->device_fpgastate==FPGA_WORK_STATE_SLAVE) ||
+				(trapptr->device_fpgastate==FPGA_WORK_STATE_MASTER)){
+			
+				tmpnum = (trapptr->device_fpgastate==FPGA_WORK_STATE_MASTER)?1:0;			
+			}
+			else{
+				SysInfoTrace("FPGA_WORK_STATE[%x]\r\n",trapptr->device_fpgastate);
+				tmpnum = 2;
+				}
+			
 			strcpy(msg_trap.snmp_msg.u_data.cdd_FPGAState_trap.cddFPGAWorkState ,trap_FPGA_Work_state[tmpnum]);
 			strcpy(msg_trap.snmp_msg.u_data.cdd_FPGAState_trap.cddvigorSource, buffer);
 			
@@ -618,14 +1286,22 @@ void Trap_msg_to_snmpd(uint32 opt_code){
 }
 void * pthread_second_task(void *arg) {
 	
-	int value;
+	int count=0;
 	QUEUE_MSG_T msg;
 	SysInfoTrace("-->pthread_second_task start\n");
 
 	msg.msg_type = CMD_GET;
 	msg.snmp_msg.oper_code = 0x32;
 	while (1) {
-		
+		count++;
+		if(count%5 == 0)
+			{
+			//set_ipaddress("192.168.1.111");
+			}
+		else{
+			//set_ipaddress("192.168.1.112");
+			
+			}
 		sem_wait(&trapsignal);
 		refresh_cdd_param();
 		if(Check_trap_flag()==TRUE){
@@ -716,6 +1392,25 @@ static void my_func(int sign_no) {
 }
 #endif
 
+void init_SnmpData()
+{
+	SnmpData[1] = snmp_data_0x01;
+	SnmpData[2] = snmp_data_0x02;
+	SnmpData[3] = snmp_data_0x03;
+	SnmpData[4] = snmp_data_0x04;
+	SnmpData[5] = snmp_data_0x05;
+	SnmpData[0x32] = snmp_data_0x32;
+	SnmpData[0x36] = snmp_data_0x36;
+	SnmpData[0x60] = snmp_data_0x60;
+	SnmpData[0x61] = snmp_data_0x61;
+	SnmpData[0x62] = snmp_data_0x62;
+	SnmpData[0x63] = snmp_data_0x63;
+	SnmpData[0x64] = snmp_data_0x64;
+	SnmpData[0x65] = snmp_data_0x65;
+	SnmpData[0x66] = snmp_data_0x66;
+
+
+}
 /*****************************************************************************************
  * 										网关线程相关参数初始化
  *****************************************************************************************/
@@ -816,6 +1511,10 @@ int snmp_init(void) {
 	set_timer();
 	signal(SIGALRM, signal_handler);
 
+	init_SnmpData();
+
+	
+
 #endif
 	return 0;
 }
@@ -912,6 +1611,92 @@ static int snmp_data_trap(QUEUE_MSG_T *queue, SN_DataObject *obj,
 }
 #endif
 
+
+#if	1
+//获去GateWay
+static int get_gateway(char *gateway) {
+	FILE *fp;
+	char buf[512];
+	char cmd[128];
+// char gateway[30];
+	char *tmp;
+
+	strcpy(cmd, "ip route");
+	fp = popen(cmd, "r");
+	if (NULL == fp) {
+		perror("popen error");
+		return -1;
+	}
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		tmp = buf;
+		while (*tmp && isspace(*tmp))
+			++tmp;
+		if (strncmp(tmp, "default", strlen("default")) == 0)
+			break;
+	}
+	sscanf(buf, "%*s%*s%s", gateway);
+	SysInfoTrace("default gateway:%s\n", gateway);
+
+	pclose(fp);
+
+	return 0;
+}
+#endif
+
+#if 1
+static int set_gateway(const unsigned char *ip) {
+
+	int sockFd;
+	struct sockaddr_in sockaddr;
+	struct rtentry rt;
+	if (is_valid_ip(ip) < 0) {
+		SysInfoTrace("gateway was invalid!\n");
+		return -1;
+	}
+
+	sockFd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sockFd < 0) {
+		perror("Socket create error.\n");
+		return -1;
+	}
+
+	memset(&rt, 0, sizeof(struct rtentry));
+	rt.rt_dst.sa_family = AF_INET;
+	((struct sockaddr_in *) &rt.rt_dst)->sin_addr.s_addr = 0;
+	rt.rt_genmask.sa_family = AF_INET;
+	((struct sockaddr_in *) &rt.rt_genmask)->sin_addr.s_addr = 0;
+	rt.rt_flags = RTF_UP;
+	if (ioctl(sockFd, SIOCDELRT, &rt) < 0) {
+		perror("ioctl(SIOCDELRT) error in DELT_default_route\n");
+		close(sockFd);
+		return -1;
+	}
+
+	memset(&rt, 0, sizeof(struct rtentry));
+	memset(&sockaddr, 0, sizeof(struct sockaddr_in));
+	sockaddr.sin_family = AF_INET;
+	sockaddr.sin_port = 0;
+	if (inet_aton(ip, &sockaddr.sin_addr) < 0) {
+		perror("inet_aton error\n");
+		close(sockFd);
+		return -1;
+	}
+
+	memcpy(&rt.rt_gateway, &sockaddr, sizeof(struct sockaddr_in));
+	((struct sockaddr_in *) &rt.rt_dst)->sin_family = AF_INET;
+	((struct sockaddr_in *) &rt.rt_genmask)->sin_family = AF_INET;
+	rt.rt_flags = RTF_GATEWAY;
+	if (ioctl(sockFd, SIOCADDRT, &rt) < 0) {
+		perror("ioctl(SIOCADDRT) error in set_default_route\n");
+		close(sockFd);
+		return -1;
+	}
+
+	return 0;
+
+}
+
+#endif
 
 static int clean_MsgQueue(QUEUE_MSG_T *p_msg, int c) {
 	int msqid = -1;

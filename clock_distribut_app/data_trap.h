@@ -38,15 +38,15 @@ typedef struct parameter {
 
 #define		_VERSION_YEAR 	2018
 #define		_VERSION_MONTH	04
-#define		_VERSION_DAY	12
+#define		_VERSION_DAY	27
 #define		_VERSION_MAJOR	1
 #define		_VERSION_MINOR	0
 #define		_VERSION_	0
-#define		_VERSION_BUILD_ID	0
+#define		_VERSION_BUILD_ID	1
 
 VERSION ArmVersion;
 CLOCK_PARA ClockParameter;
-
+#define DEVICE_NAME		"Model:Clock_distribut"
 
 
  CLOCK_PARA *  cdd_get_clk_param(void);
